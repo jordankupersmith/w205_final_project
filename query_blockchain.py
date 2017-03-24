@@ -1,10 +1,11 @@
-###Change the script so it is only querying blockchain.info one time for each variable instead of separately.
+
 
 from datetime import timedelta, date, datetime
 import urllib, json
 import time
 
 epoch = datetime.utcfromtimestamp(0)
+
 
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):
@@ -15,14 +16,23 @@ def unix_time_millis(d):
     return (dt - epoch).total_seconds() * 1000.0
     
 
-
 def get_day_blocks(day_ms):
     url = "https://blockchain.info/blocks/{:.0f}?format=json"
-    response = urllib.urlopen(url.format(day_ms))
-    data = json.loads(response.read())
-    return data['blocks']
-    
-
+    connection_test=True
+    m=0
+    while connection_test == True and m < 500:
+        try:
+            print "Connecting to blockchain.info..."
+            response = urllib.urlopen(url.format(day_ms))
+            data = json.loads(response.read())
+            connection_test=False
+            return data['blocks']
+            break              
+        except:
+            print "Connection not working trying again in 20 seconds"
+            time.sleep(20)
+            m=m + 1
+            continue
 
 def get_block_hashes(day_ms):
     block_list = get_day_blocks(day_ms)
@@ -32,13 +42,25 @@ def get_block_hashes(day_ms):
         block_hash_list.append(block['hash'])
     return block_hash_list
 
+
 def get_block_info(block_hash):
     url = "https://blockchain.info/rawblock/{0}"
-    response = urllib.urlopen(url.format(block_hash))
-
-    block_variables = json.loads(response.read())
-    return block_variables
-  
+    connection_test=True
+    m=0
+    while connection_test == True and m < 500:
+        try:
+            print "Connecting to blockchain.info..."
+            response = urllib.urlopen(url.format(block_hash))
+            block_variables = json.loads(response.read())
+            connection_test=False
+            sleep(
+            return block_variables
+            break              
+        except:
+            print "Connection not working trying again in 20 seconds"
+            time.sleep(20)
+            m=m + 1
+            continue 
 
     
 def get_timestamp(block_hash):
@@ -56,19 +78,16 @@ if __name__ == "__main__":
     
     date_count_list = []
     for single_date in daterange(start_date, end_date):
-        print single_date, "single_date"
+        
         day_ms = unix_time_millis(single_date)
-        print day_ms, "day_ms"
+        
         block_hashes = get_block_hashes(day_ms)
         day_tx_count = 0
         for i, block_hash in enumerate(block_hashes):
             block_variables=get_block_info(block_hash)
-            print block_variables['height']
             hash_value=block_variables['hash']
-            #block_tx_count = get_block_tx_count(block_hash)
             block_tx_count = block_variables['n_tx']
             timestamp = get_timestamp(block_hash)
-            #print "block {} of {} has {} transactions".format(i, len(block_hashes), block_tx_count)
             print "block {} of {} has a hash of {} and has {} transactions and was processed at {}".format(i, len(block_hashes), hash_value, block_tx_count, timestamp)
             day_tx_count += block_tx_count
         print single_date, day_tx_count
