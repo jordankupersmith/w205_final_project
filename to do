@@ -5,3 +5,4 @@
 -push the pull of the blockchain into bigquery (maybe put it in postgres as an intermediate step?)
 -Do a stress test of the pull. Make sure that there is no timeout and we can pull the whole blockchain. See how long it takes
   turn off your wifi and see what happens in the case of an internet hiccup. Maybe write a code fix for it.
+-Add a unique_id for each block row. Would the hash variable work?  
