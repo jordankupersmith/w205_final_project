@@ -1,0 +1,8 @@
+-Add in daily average price, and daily total BTC transacted from a large singular daily updated JSON file from blockchain.info
+-consolidate query_bitcoin.py into one call to blockchain.info per block (currently separate call for each variable)
+-see if this site has anything useful : https://www.quandl.com/
+-add a streaming aspect that checks for a new block every 10 or so minutes. See Peter's slack chat on 23/3. 
+-push the pull of the blockchain into bigquery (maybe put it in postgres as an intermediate step?)
+-Do a stress test of the pull. Make sure that there is no timeout and we can pull the whole blockchain. See how long it takes
+  turn off your wifi and see what happens in the case of an internet hiccup. Maybe write a code fix for it.
+-Add a unique_id for each block row. Would the hash variable work?  

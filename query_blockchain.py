@@ -1,10 +1,16 @@
-
-
 from datetime import timedelta, date, datetime
 import urllib, json
 import time
+import sys
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
+startTime = datetime.now()
+args = int(sys.argv[1])
 epoch = datetime.utcfromtimestamp(0)
+
+conn = psycopg2.connect(database="blockchain", user="postgres", password="pass", host="localhost", port="5432")
+cur = conn.cursor()
 
 
 def daterange(start_date, end_date):
@@ -53,7 +59,6 @@ def get_block_info(block_hash):
             response = urllib.urlopen(url.format(block_hash))
             block_variables = json.loads(response.read())
             connection_test=False
-            sleep(
             return block_variables
             break              
         except:
@@ -68,13 +73,15 @@ def get_timestamp(block_hash):
     is_dst = time.daylight and time.localtime().tm_isdst > 0
     utc_offset = - (time.altzone if is_dst else time.timezone)
     time_data_utc=time_data -utc_offset
-    return datetime.fromtimestamp(time_data_utc).strftime('%Y-%m-%d %H:%M:%S') 
+    return datetime.fromtimestamp(time_data_utc).strftime('%Y-%m-%d %H:%M:%S')
+    
+
        
 #####A blocks block hash always identifies a single block uniquely. A block also always has a specific block height. However, it is not always #the case that a specific block height can identify a single block. Rather, two or more blocks might compete for a single position in the #blockchain.
 if __name__ == "__main__": 
 
-    start_date = date(2013, 1, 27)
-    end_date = date(2013, 1, 28)
+    start_date = date(args, 1, 1)
+    end_date = date(args, 12, 31)
     
     date_count_list = []
     for single_date in daterange(start_date, end_date):
@@ -83,15 +90,26 @@ if __name__ == "__main__":
         
         block_hashes = get_block_hashes(day_ms)
         day_tx_count = 0
+        
         for i, block_hash in enumerate(block_hashes):
             block_variables=get_block_info(block_hash)
             hash_value=block_variables['hash']
             block_tx_count = block_variables['n_tx']
+            block_tx_count_str=str(block_tx_count)
+            height =str(block_variables['height'])
             timestamp = get_timestamp(block_hash)
-            print "block {} of {} has a hash of {} and has {} transactions and was processed at {}".format(i, len(block_hashes), hash_value, block_tx_count, timestamp)
+            print "block {} of {} has a hash of {}, a height of {} and has {} transactions and was processed at {}".format(i, len(block_hashes), hash_value, height, block_tx_count, timestamp)
             day_tx_count += block_tx_count
+            try:
+                cur.execute("INSERT INTO blocks (hash_value, height, block_tx_count, timestamp) VALUES ('" + hash_value + "', '" + height + "', '" + block_tx_count_str + "', '" + timestamp + "')");
+            except:
+                pass
+            conn.commit()
         print single_date, day_tx_count
         date_count_list.append((single_date, day_tx_count))
-
+    
     print "\n\n========== DONE ==========\n\n"
     print date_count_list
+conn.close()    
+print "The script took", datetime.now() - startTime   
+ 
