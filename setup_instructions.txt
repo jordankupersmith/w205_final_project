@@ -1,3 +1,5 @@
+-edit the ClientAliveInterval to 120 in /etc/ssh/ssh_config on ec2 to prevent time outs when building the database.
+-set ServerAliveInterval to 120 in /etc/ssh/ssh_config on your client. This applies to linux only. Figure out what adaptation you may need on windows or OSX.
 1. launch the standard EC2 instance
 2. start postgres
 3. make  a directory called /data/final and navigate to it
@@ -24,6 +26,10 @@ python2.7 setup.py install
 easy_install-2.7 pip
 7. run the following as root:
 pip2.7 install psycopg2
+
+8. Go to /data/final and run:
+nohup bash build_blockchain.sh
+and then press cntrl c to get back to the command line. type ps and you should see a python process for every year between 2009 to 2017.
 
 
     
