@@ -13,9 +13,10 @@ conn = psycopg2.connect(database="blockchain", user="postgres", password="pass",
 cur = conn.cursor()
 
 
+
 def daterange(start_date, end_date):
-    for n in range(int ((end_date - start_date).days)):
-        yield start_date + timedelta(n)
+    for n in range(int ((end_date  - start_date).days)):
+        yield start_date + timedelta(n)        
 
 def unix_time_millis(d):
     dt = datetime(d.year, d.month, d.day)
@@ -82,10 +83,10 @@ if __name__ == "__main__":
 
     start_date = date(args, 1, 1)
     end_date = date(args, 12, 31)
-    
+    end_date1 = end_date + timedelta(days=1)
     date_count_list = []
-    for single_date in daterange(start_date, end_date):
-        
+    
+    for single_date in daterange(start_date, end_date1):    
         day_ms = unix_time_millis(single_date)
         
         block_hashes = get_block_hashes(day_ms)
