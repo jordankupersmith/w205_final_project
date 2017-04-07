@@ -1,14 +1,21 @@
--edit the ClientAliveInterval to 120 in /etc/ssh/ssh_config on ec2 to prevent time outs when building the database.
--set ServerAliveInterval to 120 in /etc/ssh/ssh_config on your client. This applies to linux only. Figure out what adaptation you may need on windows or OSX.
-1. launch the standard EC2 instance
-2. start postgres
-3. make  a directory called /data/final and navigate to it
-4. create a database called blockchain and connect to it:
+1. edit the ClientAliveInterval to 120 in /etc/ssh/ssh_config on ec2 to prevent time outs when building the database.
+2. set ServerAliveInterval to 120 in /etc/ssh/ssh_config on your client. This applies to linux only. Figure out what adaptation you may need on windows or OSX.
+
+3. launch the standard EC2 instance
+4. 
+mount -t ext4 /dev/xvdf /data
+
+/data/start_postgres.sh
+su - w205
+
+5. make  a directory called /data/final and navigate to it
+Copy the files query_blockchain.py , add_in_missing_heights.py, get_price.py and build_blockchain.sh from github to the directory.
+6. create a database called blockchain and connect to it:
     psql -U postgres
     create database blockchain;
     \c blockchain
     
-5. Create your table:
+7. Create your tables:
 
 CREATE TABLE blocks (
     hash_value text primary key,
@@ -17,20 +24,41 @@ CREATE TABLE blocks (
     timestamp timestamp 
 );
 
-6. exit out of postgres
-7. get pip working for python 2.7 by running the following as root
+
+CREATE TABLE price (
+   date timestamp primary key,
+   price text
+  
+);
+
+8. exit out of postgres
+9. get pip working for python 2.7 by running the following as root
 wget --no-check-certificate http://pypi.python.org/packages/source/d/distribute/distribute-0.6.35.tar.gz
 tar xf distribute-0.6.35.tar.gz
 cd distribute-0.6.35
 python2.7 setup.py install
 easy_install-2.7 pip
-7. run the following as root:
+11. run the following as root:
 pip2.7 install psycopg2
 
-8. Go to /data/final and run:
-nohup bash build_blockchain.sh
-and then press cntrl c to get back to the command line. type ps and you should see a python process for every year between 2009 to 2017.
 
+
+10. Go to /data/final and run:
+nohup bash  build_blockchain.sh > building_blockchain.txt &
+
+and then press cntrl c to get back to the command line. type ps and you should see a python process for every year between 2009 to 2017. The process should take 
+25 hours. You should also see a log file when the initial build of 2009 to 2017 is done to add in blocks that were skipped. It is called 2nd_running_database_add.txt 
+You will also see a log file of the shell script process called building_blockchain.txt
+
+11. Export your database from postgres to csv:
+In terminal type:
+psql -U postgres
+\c blockchain
+COPY price to '/data/final/price.csv' DELIMITER ',' CSV HEADER;
+COPY blocks to '/data/final/price.csv' DELIMITER ',' CSV HEADER;
+\q
+
+12. MIGRATE csvs to bigquery ::FILL IN DETAILS HERE::
 
     
     
