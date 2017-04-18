@@ -151,10 +151,11 @@ if __name__ == '__main__':
 
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--start", help="start date MM/DD/YYYY")
+    parser.add_argument("-s", "--start",  help="start date MM/DD/YYYY")
     parser.add_argument("-e", "--end", help="end date MM/DD/YYYY")
-    parser.add_argument("-t", "--table", help="bigquery table to use")
-    parser.add_argument("-d", "--dataset", help="bigquery dataset to use")
+    parser.add_argument("-t", "--table", default = 'blockchain_copy_3', help="bigquery table to use")
+    parser.add_argument("-d", "--dataset", default = 'w205_final_project', help="bigquery dataset to use")
+    parser.add_argument("-m", "--mode", default = 'bigquery', help="mode to use: postgres or bigquery")
     parser.add_argument("-n", "--num_threads", type=int, help="number of threads to use")
 
     args = parser.parse_args()
@@ -166,6 +167,8 @@ if __name__ == '__main__':
     table_name = args.table
     dataset_name = args.dataset
     num_threads = args.num_threads
+    mode = args.mode
+
 
     dates = []
 
