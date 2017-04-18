@@ -36,7 +36,8 @@ def get_day_blocks(day_ms):
             break              
         except Exception as e:
             sleep_time = random.randrange(1,10)
-            print e, "\nConnection not working trying again in {} seconds. Attempt number {}".format(sleep_time, m)
+            if m >=5:
+                print e, "\nConnection not working trying again in {} seconds. Attempt number {}".format(sleep_time, m)
             time.sleep(sleep_time)
             m=m + 1
             continue
@@ -68,7 +69,8 @@ def get_block_info(block_hash):
             break              
         except Exception as e:
             sleep_time = random.randrange(1,10)
-            print e, "\nConnection not working trying again in {} seconds. Attempt number {}".format(sleep_time, m)
+            if m >= 5:
+                print e, "\nConnection not working trying again in {} seconds. Attempt number {}".format(sleep_time, m)
             time.sleep(sleep_time)
             m=m + 1
             continue 
