@@ -4,13 +4,14 @@ import urllib, json
 import sys
 import threading
 import random
+import argparse
 
 from datetime import timedelta, date, datetime
 from google.cloud import bigquery
 
-DATASET = "w205_final_project"
-TABLE = "blockchain_copy_3"
-N_THREADS = 100
+dataset_name = "w205_final_project"
+table_name = "blockchain_copy_3"
+num_threads = 100
 
 def daterange(start_date, end_date):
     for n in range(int ((end_date  - start_date).days)):
@@ -28,7 +29,6 @@ def get_day_blocks(day_ms):
     m=0
     while connection_test == True and m < 500:
         try:
-            # print "Connecting to blockchain.info..."
             response = urllib.urlopen(url.format(day_ms))
             data = json.loads(response.read())
             connection_test=False
@@ -44,10 +44,8 @@ def get_day_blocks(day_ms):
 
 def get_day_block_hashes(day_ms):
     block_list = get_day_blocks(day_ms)
-    # print "{} blocks in list for day {:.0f}".format(len(block_list), day_ms)
     block_hash_list = []
     for block in block_list:
-        # print "getting hash"
         block_hash_list.append(block['hash'])
     return block_hash_list
 
@@ -58,12 +56,9 @@ def get_block_info(block_hash):
     m=0
     while connection_test == True and m < 500:
         try:
-            # print "Connecting to blockchain.info..."
-            # print "getting block" , block_hash
             response = urllib.urlopen(url.format(block_hash))
             response_str = response.read()
             block_variables = json.loads(response_str)
-            # print "got block"
             connection_test=False
             return block_variables
             break              
@@ -83,19 +78,16 @@ def get_timestamp(block):
     return datetime.fromtimestamp(time_data_utc).strftime('%Y-%m-%d %H:%M:%S')    
 
 def write_blocks_to_table(blocks):
-    # dataset_name = "w205_final_project"
-    # print "inside block len", len(blocks)
     bigquery_client = bigquery.Client()
-    dataset = bigquery_client.dataset(DATASET)
-    table = dataset.table(TABLE)
+    dataset = bigquery_client.dataset(dataset_name)
+    table = dataset.table(table_name)
 
     # Reload the table to get the schema.
     table.reload()
-    # print blocks
     errors = table.insert_data(blocks)
 
     if not errors:
-        print('Loaded {} rows into {}:{}'.format(len(blocks), DATASET, TABLE))
+        print('Loaded {} rows into {}:{}'.format(len(blocks), dataset_name, table_name))
     else:
         print('Errors:')
         pprint(errors)
@@ -109,31 +101,21 @@ def date_block_worker(date):
     day_tx_count = 0
 
     blocks = []
-    
     for i, block_hash in enumerate(block_hashes):
         block_variables = get_block_info(block_hash)
-        # print block_variables
         hash_value = block_variables['hash']
-        # print "hash_value", hash_value
         block_tx_count = block_variables['n_tx']
-        # print "block_tx_count", block_tx_count
-        # block_tx_count_str = str(block_tx_count)
         height = block_variables['height']
-        # print "height", height
         timestamp = get_timestamp(block_variables)
         row = (hash_value, height, block_tx_count, timestamp)
         blocks.append((row),)
-        # print "timestamp", timestamp
-        # print "block {} of {} has a hash of {}, a height of {} and has {} transactions and was processed at {}".format(i, len(block_hashes), hash_value, height, block_tx_count, timestamp)
 
-    # print "block len" , len(blocks)
     if len(blocks) > 0:
         write_blocks_to_table(blocks)
     print "done", date
 
-def date_handler(date_list):
-    # print date_list
-    p = multiprocessing.Pool(N_THREADS)
+def date_handler(date_list, num_threads):
+    p = multiprocessing.Pool(num_threads)
     res_dict = {}
     try:
         p.map(date_block_worker, date_list)
@@ -145,10 +127,24 @@ def date_handler(date_list):
 
 if __name__ == '__main__':
 
-    start_date = date(2009, 1, 1)
-    end_date = date(2009, 12, 31)
-    # end_date = date(args, 12, 31)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--start", help="start date MM/DD/YYYY")
+    parser.add_argument("-e", "--end", help="end date MM/DD/YYYY")
+    parser.add_argument("-t", "--table", help="bigquery table to use")
+    parser.add_argument("-d", "--dataset", help="bigquery dataset to use")
+    parser.add_argument("-n", "--num_threads", type=int, help="number of threads to use")
+
+    args = parser.parse_args()
+
+
+    start_date = datetime.strptime(args.start, '%m/%d/%Y')
+    end_date = datetime.strptime(args.end, '%m/%d/%Y')
     end_date1 = end_date + timedelta(days=1)
+    table_name = args.table
+    dataset_name = args.dataset
+    num_threads = args.num_threads
+
     dates = []
 
     for single_date in daterange(start_date, end_date1):
@@ -156,4 +152,4 @@ if __name__ == '__main__':
 
     print dates
 
-    date_handler(dates)
+    date_handler(dates, num_threads)
