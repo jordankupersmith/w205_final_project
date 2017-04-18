@@ -4,6 +4,7 @@ from google.cloud import bigquery
 import urllib, json
 import time
 import sys
+import argparse
 
 startTime = datetime.now()
 epoch = datetime.utcfromtimestamp(0)
@@ -25,9 +26,9 @@ def get_latest_block_from_chain():
             m=m + 1
             continue
 
-def get_latest_block_hash_from_table(table_name):
+def get_latest_block_hash_from_table(table_name, dataset_name):
     client = bigquery.Client()
-    query = "SELECT hashvalue FROM `w205_final_project.{}` order by timestamp desc LIMIT 1".format(table_name)
+    query = "SELECT hashvalue FROM `{}.{}` order by timestamp desc LIMIT 1".format(dataset_name, table_name)
     query_results = client.run_sync_query(query)
     query_results.use_legacy_sql = False
     query_results.run()
@@ -39,8 +40,7 @@ def get_latest_block_hash_from_table(table_name):
         page_token=page_token)
     return rows[0][0]
 
-def write_block_to_table(block, table_name):
-    dataset_name = "w205_final_project"
+def write_block_to_table(block, table_name, dataset_name):
     bigquery_client = bigquery.Client()
     dataset = bigquery_client.dataset(dataset_name)
     table = dataset.table(table_name)
@@ -75,25 +75,35 @@ def get_timestamp(block):
 #####A blocks block hash always identifies a single block uniquely. A block also always has a specific block height. However, it is not always #the case that a specific block height can identify a single block. Rather, two or more blocks might compete for a single position in the #blockchain.
 if __name__ == "__main__": 
 
-    table_name = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--table", default = 'blockchain_copy_3', help="bigquery table to use")
+    parser.add_argument("-d", "--dataset", default = 'w205_final_project', help="bigquery dataset to use")
+    parser.add_argument("-s", "--sleep", type=int, default = 60, help="number of seconds to sleep")
+
+    args = parser.parse_args()
+
+    table_name = args.table
+    dataset_name = args.dataset
+    sleep_time = args.sleep
+
     print "Table name:", table_name
     latest_chain_block = get_latest_block_from_chain()
     latest_chain_hash = latest_chain_block['hash']
 
-    latest_table_hash = get_latest_block_hash_from_table(table_name)
+    latest_table_hash = get_latest_block_hash_from_table(table_name, dataset_name)
 
     print "Most recent on chain: ", latest_chain_hash
     print "Most recent in table: ", latest_table_hash
 
     if latest_chain_hash != latest_table_hash:
         print "writing ", latest_chain_hash, "to ", table_name
-        write_block_to_table(latest_chain_block, table_name)
+        write_block_to_table(latest_chain_block, table_name, dataset_name)
     else:
         print table_name, "is up to date"
 
     while True:
-        print "Sleeping for 5 min..."
-        time.sleep(5 * 60) # sleep 5 min
+        print "Sleeping for {} sec...".format(sleep_time)
+        time.sleep(sleep_time) 
 
         new_block = get_latest_block_from_chain()
         new_hash = new_block['hash']
