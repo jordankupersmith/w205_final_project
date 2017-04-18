@@ -32,5 +32,5 @@ python threaded_query_blockchain.py -s <start_date> -e <end_date> -t <table_name
 6 -- dedupe historical data. Note -- it's ok for source_table and dest_table to be the same
 ./dedupe_table.sh <dataset_name> <source_table> <dest_table>
 
-7 -- start streaming
+7 -- start streaming. Note -- table_name should be the same as dest_table above, to ensure you're streaming to the deduped table
 python streaming_mode.py -t <table_name> -d <dataset_name -s <sleep_time>
