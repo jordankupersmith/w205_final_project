@@ -5,13 +5,18 @@ import sys
 import threading
 import random
 import argparse
+import pprint 
 
 from datetime import timedelta, date, datetime
 from google.cloud import bigquery
 
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
 dataset_name = "w205_final_project"
 table_name = "blockchain_copy_3"
 num_threads = 100
+mode = "bigquery"
 
 def daterange(start_date, end_date):
     for n in range(int ((end_date  - start_date).days)):
@@ -78,20 +83,37 @@ def get_timestamp(block):
     return datetime.fromtimestamp(time_data_utc).strftime('%Y-%m-%d %H:%M:%S')    
 
 def write_blocks_to_table(blocks):
-    bigquery_client = bigquery.Client()
-    dataset = bigquery_client.dataset(dataset_name)
-    table = dataset.table(table_name)
+    m = 0
+    noErrors = False
+    if mode is "bigquery":
+        while not noErrors and m <= 5:
+            bigquery_client = bigquery.Client()
+            dataset = bigquery_client.dataset(dataset_name)
+            table = dataset.table(table_name)
 
-    # Reload the table to get the schema.
-    table.reload()
-    errors = table.insert_data(blocks)
+            # Reload the table to get the schema.
+            table.reload()
+            errors = table.insert_data(blocks)
 
-    if not errors:
-        print('Loaded {} rows into {}:{}'.format(len(blocks), dataset_name, table_name))
-    else:
-        print('Errors:')
-        pprint(errors)
+            if not errors:
+                print('Loaded {} rows into {}:{}'.format(len(blocks), dataset_name, table_name))
+                noErrors = True
+            else:
+                # may introduce duplicates, be sure to dedupe
+                print('Errors:')
+                pprint(errors)
+                print("retrying")
 
+    else :
+        # postgres mode
+        for block in blocks:
+            (hash_value, height, block_tx_count, timestamp) = block
+            block_tx_count_str = str(block_tx_count)
+            try:
+                cur.execute("INSERT INTO blocks (hash_value, height, block_tx_count, timestamp) VALUES ('" + hash_value + "', '" + height + "', '" + block_tx_count_str + "', '" + timestamp + "')");
+            except:
+                pass
+            conn.commit()
 
 def date_block_worker(date):
     print "got " , date
