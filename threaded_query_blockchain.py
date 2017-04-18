@@ -156,7 +156,7 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--table", default = 'blockchain_copy_3', help="bigquery table to use")
     parser.add_argument("-d", "--dataset", default = 'w205_final_project', help="bigquery dataset to use")
     parser.add_argument("-m", "--mode", default = 'bigquery', help="mode to use: postgres or bigquery")
-    parser.add_argument("-n", "--num_threads", type=int, help="number of threads to use")
+    parser.add_argument("-n", "--num_threads", default = 5, type=int, help="number of threads to use")
 
     args = parser.parse_args()
 
