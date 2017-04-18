@@ -1,0 +1,36 @@
+This guide assumes
+-- you have a gcp account
+-- you have a gcp project with billing enabled
+-- you have enabled bigquery for your project
+
+1 -- install google cloud sdk
+https://cloud.google.com/sdk/downloads
+
+Don't forget to run...
+
+$ gcloud init
+https://cloud.google.com/sdk/gcloud/reference/init
+
+$ gcloud auth login
+https://cloud.google.com/sdk/gcloud/reference/auth/login
+
+$ gcloud config set project myProject
+https://cloud.google.com/sdk/gcloud/reference/config/set
+
+2 -- install bigquery client libraries
+https://cloud.google.com/bigquery/docs/reference/libraries
+
+3 -- create a dataset
+bq mk <dataset_name>
+
+4 -- create a table
+./make_table.sh <dataset_name> <table_name>
+
+5 -- load historical data
+python threaded_query_blockchain.py -s <start_date> -e <end_date> -t <table_name> -d <dataset_name -n <num_threads>
+
+6 -- dedupe historical data. Note -- it's ok for source_table and dest_table to be the same
+./dedupe_table.sh <dataset_name> <source_table> <dest_table>
+
+7 -- start streaming
+python streaming_mode.py -t <table_name> -d <dataset_name -s <sleep_time>
