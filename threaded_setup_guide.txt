@@ -26,17 +26,24 @@ bq mk <dataset_name>
 4 -- create a table
 bash ./make_table.sh <dataset_name> <table_name>
 
-5 -- load historical data
+5 -- load historical data into a temporary staging table. 
 python threaded_query_blockchain.py -s <start_date> -e <end_date> -t <table_name> -d <dataset_name> -n <num_threads>
+
+Note -- if the connection is interrupted, it's safe to re-run over the same set of dates, using the same table. The
+deduplication step will account for this
 Note: on a macbook pro with a moderate connection, we ran successfully with ~60 threads
-Note: a google application credential must be set beforehand. 
+Note: As described above google application credential must be set beforehand. 
 See: https://developers.google.com/identity/protocols/application-default-credentials
 Once the credential is downloaded, you must type this in terminal:
 export GOOGLE_APPLICATION_CREDENTIALS='/path/to/your/client_secret.json'
 
-6 -- dedupe historical data. Note -- it's ok for source_table and dest_table to be the same
+6 -- dedupe historical data. 
 ./dedupe_table.sh <dataset_name> <source_table> <dest_table>
 
-7 -- start streaming. Note -- table_name should be the same as dest_table above, to ensure you're streaming to the deduped table
+Note -- make sure the source and the dest tables are different.
+
+7 -- start streaming. 
 python streaming_mode.py -t <table_name> -d <dataset_name> -s <sleep_time>
-Note sleep time is in seconds. In the early days of bitcoin, you could see over 1 hour between blocks and sometimes blocks that were a few seconds apart. However, now with the network being more mature it is an average of 9 minutes with little deviation. We recommend a 1 minute sleep time to be safe. 
+
+Note -- table_name should be the same as dest_table above, to ensure you're streaming to the deduped table
+Note -- sleep time is in seconds. In the early days of bitcoin, you could see over 1 hour between blocks and sometimes blocks that were a few seconds apart. However, now with the network being more mature it is an average of 9 minutes with little deviation. We recommend a 1 minute sleep time to be safe. 
