@@ -58,7 +58,82 @@ COPY price to '/data/final/price.csv' DELIMITER ',' CSV HEADER;
 COPY blocks to '/data/final/price.csv' DELIMITER ',' CSV HEADER;
 \q
 
-12. MIGRATE csvs to bigquery ::FILL IN DETAILS HERE::
+12. Create a project in BigQuery
 
-    
-    
+13 Create a new dataset in BigQuery
+
+14. MIGRATE blockchain_data.csv to bigquery. Do so by creating a new table in the appropriate dataset. You can import the csv from source and name it blockchain_data and select automatically detect schema.
+
+15. Find GDELT dataset in public datasets and add it as a dataset in the BQ project
+
+16. Complete this query (we saved it as Initial Join v2) to join blockchain_data and GDELT datasets:
+
+#standardSQL
+SELECT
+  blockchain.tx_per_day AS `num_tx`,
+  GDELT.GLOBALEVENTID AS GLOBALEVENTID,
+  concat(substr(cast(GDELT.SQLDATE as string),1,4),"-",substr(cast(GDELT.SQLDATE as string),5,2),"-",substr(cast(GDELT.SQLDATE as string),7,2)) AS day_timestamp,
+  GDELT.Actor1Code AS Actor1Code,
+  GDELT.Actor1Name AS Actor1Name,
+  GDELT.Actor2Code AS Actor2Code,
+  GDELT.Actor2Name AS Actor2Name,
+  GDELT.AvgTone AS AvgTone,
+  GDELT.SOURCEURL AS SOURCEURL
+FROM
+  w205_final_project.GDELT AS GDELT
+INNER JOIN
+  (select sum(num_tx) as tx_per_day, substr(string(timestamp),0, 10) AS bchain_TIMESTAMP
+from w205_final_project.blockchain_data
+group by bchain_TIMESTAMP) blockchain
+ON
+  blockchain.bchain_TIMESTAMP = concat(substr(cast(GDELT.SQLDATE as string),1,4),"-",substr(cast(GDELT.SQLDATE as string),5,2),"-",substr(cast(GDELT.SQLDATE as string),7,2))
+  
+17. Complete this query (day over day deltas) to begin analysis:
+
+select current.trans as trans, current.trans-previous.previous_trans as delta, current.day_timestamp as day_timestamp
+
+from
+
+(SELECT * from
+
+(select row_number() OVER(ORDER BY day_timestamp desc) as row_num, avg(num_tx) as trans, day_timestamp from w205_final_project.joined_dataset
+
+group by day_timestamp order by day_timestamp desc) current
+
+inner join 
+(select row_num-1 as previous_num, trans as previous_trans 
+
+from (
+SELECT row_number() OVER(ORDER BY day_timestamp desc) as row_num, avg(num_tx) as trans, day_timestamp from w205_final_project.joined_dataset group by day_timestamp order by day_timestamp desc
+)
+) previous
+
+on previous.previous_num = current.row_num)
+
+order by delta desc
+
+18. connect BigQuery to Tableau
+
+19. iterate through created day_over_day_deltas table in Tableau for analysis
+
+20. some BQ queries to help as well:
+
+select count(*) as count,avg(AvgTone) as avg_tone, Actor1Name  from w205_final_project.joined_dataset
+where day_timestamp in (select day_timestamp from w205_final_project.day_over_day_deltas 
+where day_timestamp!='2017-03-27' and day_timestamp!='2015-09-17' and day_timestamp!='2015-09-18' and day_timestamp!='2015-07-06' and day_timestamp!='2015-09-19' and day_timestamp!='2015-07-13'
+order by delta desc limit 10)
+group by Actor1Name
+order by count desc
+limit 50
+
+we ignore spam attack/stress testing days in the above query (Actors and Sentiment on Increase/Decrease Days) and in the following one examining US and Chinese Institutions and Transaction Deltas (named as such):
+
+select avg(delta) as avg_delta from w205_final_project.day_over_day_deltas
+where day_timestamp in (select day_timestamp from (select count(*) as counted, day_timestamp from w205_final_project.joined_dataset 
+where day_timestamp!='2017-03-27' and day_timestamp!='2015-09-17' and day_timestamp!='2015-09-18' and day_timestamp!='2015-07-06' and day_timestamp!='2015-09-19' and day_timestamp!='2015-07-13'
+and CAST(left(day_timestamp,4) AS FLOAT)>2011
+and Actor1Name='BANK OF CHINA'
+group by day_timestamp
+order by counted desc limit 10))
+
+21. iterate through these in Tableau for analysis
