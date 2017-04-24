@@ -110,6 +110,6 @@ if __name__ == "__main__":
 
         if new_hash != latest_chain_hash:
             print "got a new block! {}".format(new_hash)
-            write_block_to_table(new_block, table_name)
+            write_block_to_table(new_block, table_name, dataset_name)
             latest_chain_hash = new_hash
 
