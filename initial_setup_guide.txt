@@ -68,6 +68,8 @@ COPY blocks to '/data/final/price.csv' DELIMITER ',' CSV HEADER;
 
 16. Complete this query (we saved it as Initial Join v2) to join blockchain_data and GDELT datasets:
 
+Note: All BigQuery SQL code can also be found in project_queries.sql
+
 #standardSQL
 SELECT
   blockchain.tx_per_day AS `num_tx`,
