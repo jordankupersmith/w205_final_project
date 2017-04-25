@@ -114,12 +114,16 @@ on previous.previous_num = current.row_num)
 
 order by delta desc
 
+<<<<<<< Updated upstream
 18. connect BigQuery to Tableau
 Note: Workbook can be found in repo titled 'w205 Final Project Visualizations.twbx'.  Connection to BigQuery data requires login.
+=======
+18. Connect BigQuery to Tableau
+>>>>>>> Stashed changes
 
-19. iterate through created day_over_day_deltas table in Tableau for analysis
+19. Iterate through created day_over_day_deltas table in Tableau for analysis
 
-20. some BQ queries to help as well:
+20. Here are some BQ queries to help as well:
 
 select count(*) as count,avg(AvgTone) as avg_tone, Actor1Name  from w205_final_project.joined_dataset
 where day_timestamp in (select day_timestamp from w205_final_project.day_over_day_deltas 
@@ -129,7 +133,7 @@ group by Actor1Name
 order by count desc
 limit 50
 
-we ignore spam attack/stress testing days in the above query (Actors and Sentiment on Increase/Decrease Days) and in the following one examining US and Chinese Institutions and Transaction Deltas (named as such):
+We ignore spam attack/stress testing days in the above query (Actors and Sentiment on Increase/Decrease Days) and in the following one examining US and Chinese Institutions and Transaction Deltas (named as such):
 
 select avg(delta) as avg_delta from w205_final_project.day_over_day_deltas
 where day_timestamp in (select day_timestamp from (select count(*) as counted, day_timestamp from w205_final_project.joined_dataset 
@@ -139,4 +143,8 @@ and Actor1Name='BANK OF CHINA'
 group by day_timestamp
 order by counted desc limit 10))
 
+<<<<<<< Updated upstream
 21. iterate through these in Tableau for analysis
+=======
+21. Iterate through the resulting tables in Tableau for analysis
+>>>>>>> Stashed changes
