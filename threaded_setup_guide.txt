@@ -40,7 +40,9 @@ export GOOGLE_APPLICATION_CREDENTIALS='/path/to/your/client_secret.json'
 6 -- dedupe historical data. 
 ./dedupe_table.sh <dataset_name> <source_table> <dest_table>
 
-Note -- make sure the source and the dest tables are different.
+Note -- it's ok if the source and dest tables are the same, though for simplicity's sake it's best to have them different
+The deduplication step appends a "row num" column for use in deduping
+
 
 7 -- start streaming. 
 python streaming_mode.py -t <table_name> -d <dataset_name> -s <sleep_time>

@@ -2,7 +2,14 @@
 
 # usage: ./dedupe_table.sh <dataset name> <source table> <dest table>
 
-bq query --destination_table=$1.$3 "SELECT *
+replace=""
+
+if [ $2=$3 ];
+then
+replace="--replace"
+fi
+
+bq query $replace --destination_table=$1.$3 "SELECT *
 FROM (
   SELECT
       *,
