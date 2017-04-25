@@ -115,6 +115,7 @@ on previous.previous_num = current.row_num)
 order by delta desc
 
 18. connect BigQuery to Tableau
+Note: Workbook can be found in repo titled 'w205 Final Project Visualizations.twbx'.  Connection to BigQuery data requires login.
 
 19. iterate through created day_over_day_deltas table in Tableau for analysis
 
